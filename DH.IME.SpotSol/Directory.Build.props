@@ -1,0 +1,12 @@
+<Project>
+
+  <!-- DH.IME.SpotSol 공통 빌드 속성 -->
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <LangVersion>7.3</LangVersion>
+
+    <!-- 빌드 산출물을 솔루션 옆 output\{Configuration}\ 로 모음 -->
+    <OutputPath>$(MSBuildThisFileDirectory)output\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+
+</Project>
