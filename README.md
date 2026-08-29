@@ -1,89 +1,94 @@
 # DH.IME.Spot
 
-*English | [한국어](README.ko.md)*
+*한국어 | [English](README.en.md)*
 
-A lightweight Windows tray utility that shows the current **Korean / English IME state**
-as a small badge near your mouse cursor, the active window, and/or each monitor —
-so you always know which language you are about to type on a multi-monitor desktop.
+멀티모니터 환경에서 현재 **한/영 IME 상태**를 마우스 커서, 활성 창, 각 모니터
+근처에 작은 배지로 표시해 주는 가벼운 Windows 트레이 유틸리티입니다.
+지금 어느 언어로 입력되는지 한눈에 알 수 있습니다.
 
-- **Version:** 1.0.0.1
-- **Platform:** Windows 10 or later (x86/x64)
-- **Runtime:** .NET Framework 4.6 (ships with Windows 10+)
-- **Dependencies:** none (no NuGet packages)
+![DH.IME.Spot](docs/screenshot.png)
 
-## Features
+- **버전:** 1.0.0.1
+- **플랫폼:** Windows 10 이상 (x86/x64)
+- **런타임:** .NET Framework 4.6 (Windows 10 이상 기본 포함)
+- **의존성:** 없음 (NuGet 패키지 미사용)
 
-- **IME state badge** — a per-pixel alpha layered badge shows `K` (Korean) / `E` (English).
-- **Three placement modes, independently toggleable:**
-  - *Active window corner* — badge pinned to a corner of the focused window.
-  - *Cursor companion* — badge follows the mouse cursor (smooth 60 Hz tracking, no global mouse hook).
-  - *Per-monitor widget* — a fixed badge in a chosen corner of every monitor (or the primary only).
-- **Adjustable opacity** (10 %–100 %); glyph and drop shadow fade together with the background.
-- **Cursor badge size** option (25 %–150 %).
-- **Per-monitor DPI aware.**
-- **Full-screen aware** — badges hide automatically over exclusive / borderless full-screen apps.
-- **Run at startup** toggle.
-- **Pause overlay** from the tray menu (runtime only, not persisted).
-- Settings are stored in the **registry** — no config files are written.
+## 기능
 
-## Install / Run
+- **IME 상태 배지** — per-pixel alpha 레이어드 배지에 `K`(한글) / `E`(영문) 표시.
+- **표시 방식 3가지, 각각 독립 토글:**
+  - *활성 창 코너* — 포커스된 창의 지정 코너에 배지 고정.
+  - *커서 컴패니언* — 마우스 커서를 따라다님 (60Hz 부드러운 추적, 전역 마우스 훅 미사용).
+  - *모니터별 위젯* — 모든 모니터(또는 주 모니터만)의 지정 코너에 고정 배지.
+- **투명도 조절** (10%–100%) — 글자·그림자도 배경과 함께 흐려짐.
+- **커서 배지 크기** 옵션 (25%–150%).
+- **모니터별 DPI 대응.**
+- **전체화면 자동 숨김** — exclusive / borderless 전체화면 앱 위에서는 배지가 숨겨짐.
+- **시작 프로그램 등록** 토글.
+- 트레이 메뉴 **Pause overlay** (런타임 전용, 저장 안 함).
+- 설정은 **레지스트리**에 저장 — 설정 파일을 만들지 않음.
 
-1. Build (see below) or grab `DH.IME.Spot.exe` from a release.
-2. Run `DH.IME.Spot.exe`. It appears in the notification area (system tray).
-3. Right-click the tray icon → **Options…** to configure placement, opacity, size, and startup.
-4. Right-click → **Exit** to quit.
+## 설치 / 실행
 
-The application is a single self-contained `.exe` (~53 KB). No installer, no admin rights.
+1. 아래 방법으로 빌드하거나 릴리스에서 `DH.IME.Spot.exe` 를 받습니다.
+2. `DH.IME.Spot.exe` 실행 → 알림 영역(시스템 트레이)에 아이콘이 나타납니다.
+3. 트레이 아이콘 우클릭 → **Options…** 에서 표시 방식, 투명도, 크기, 시작 등록 설정.
+4. 우클릭 → **Exit** 로 종료.
 
-## Build
+설치 관리자 없이 단일 실행 파일(~53 KB)이며 관리자 권한이 필요 없습니다.
 
-Requires Visual Studio 2022 (or MSBuild) with the .NET Framework 4.6 targeting pack.
+![Options](docs/options.png)
+
+## 빌드
+
+.NET Framework 4.6 타게팅 팩이 설치된 Visual Studio 2022(또는 MSBuild)가 필요합니다.
 
 ```
 MSBuild DH.IME.SpotSol\workspace\DH.IME.Spot\DH.IME.Spot.csproj /t:Rebuild /p:Configuration=Release
 ```
 
-Output: `DH.IME.SpotSol\output\Release\DH.IME.Spot.exe`
+출력: `DH.IME.SpotSol\output\Release\DH.IME.Spot.exe`
 
-Solution file: `DH.IME.SpotSol\DH.IME.SpotSol.slnx` (VS2022 `.slnx` format).
-The project is a classic (non-SDK) `.csproj`, C# 7.3, `WinExe`.
+솔루션 파일: `DH.IME.SpotSol\DH.IME.SpotSol.slnx` (VS2022 `.slnx` 형식).
+프로젝트는 classic(non-SDK) `.csproj`, C# 7.3, `WinExe` 입니다.
 
-## How it works
+## 동작 원리
 
-- IME state is read from the focused window's default IME window
-  (`ImmGetDefaultIMEWnd` + `WM_IME_CONTROL` / `IMC_GETCONVERSIONMODE`, `IME_CMODE_NATIVE` bit).
-- Focus changes are tracked with narrow single-event `SetWinEventHook` registrations
-  (`EVENT_SYSTEM_FOREGROUND`, `EVENT_OBJECT_FOCUS`) plus a short polling fallback for the
-  Han/Yeong toggle (which fires no window event).
-- Badges are drawn on borderless `WS_EX_LAYERED` windows updated via `UpdateLayeredWindow`.
+- IME 상태는 포커스된 창의 기본 IME 창에서 읽습니다
+  (`ImmGetDefaultIMEWnd` + `WM_IME_CONTROL` / `IMC_GETCONVERSIONMODE`, `IME_CMODE_NATIVE` 비트).
+- 포커스 변화는 좁은 단일 이벤트 `SetWinEventHook`
+  (`EVENT_SYSTEM_FOREGROUND`, `EVENT_OBJECT_FOCUS`) 으로 추적하고,
+  창 이벤트가 발생하지 않는 한/영 토글은 짧은 주기 폴링으로 보완합니다.
+- 배지는 테두리 없는 `WS_EX_LAYERED` 창에 `UpdateLayeredWindow` 로 그립니다.
 
-## Settings (registry)
+## 설정 (레지스트리)
 
-Settings key: `HKEY_CURRENT_USER\SOFTWARE\DHTOOL\DH.IME.Spot`
+설정 키: `HKEY_CURRENT_USER\SOFTWARE\DHTOOL\DH.IME.Spot`
 
-| Value | Type | Meaning |
+| 값 | 형식 | 의미 |
 |---|---|---|
-| `BackgroundAlpha` | DWORD | Badge background alpha, 26–255 (≈10 %–100 %) |
-| `ActiveWindowEnabled` | DWORD | Active-window-corner badge on/off |
+| `BackgroundAlpha` | DWORD | 배지 배경 alpha, 26–255 (≈10%–100%) |
+| `ActiveWindowEnabled` | DWORD | 활성 창 코너 배지 on/off |
 | `ActiveWindowCorner` | REG_SZ | `TopLeft` / `TopRight` / `BottomLeft` / `BottomRight` |
-| `CursorEnabled` | DWORD | Cursor-companion badge on/off |
+| `CursorEnabled` | DWORD | 커서 컴패니언 배지 on/off |
 | `CursorBadgeSize` | REG_SZ | `Scale25` … `Scale150` |
-| `MonitorWidgetEnabled` | DWORD | Per-monitor widget badge on/off |
-| `MonitorWidgetCorner` | REG_SZ | Corner for the per-monitor widget |
+| `MonitorWidgetEnabled` | DWORD | 모니터별 위젯 배지 on/off |
+| `MonitorWidgetCorner` | REG_SZ | 모니터별 위젯 코너 |
 | `MonitorWidgetScope` | REG_SZ | `AllMonitors` / `PrimaryOnly` |
 
-Run-at-startup is stored separately as value `DH.IME.Spot` under
-`HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`.
+시작 프로그램 등록은 별도로
+`HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run` 의
+`DH.IME.Spot` 값으로 저장됩니다.
 
-### Full uninstall
+### 완전 제거
 
-Delete `DH.IME.Spot.exe`, then remove:
+`DH.IME.Spot.exe` 를 삭제한 뒤 다음을 제거합니다:
 
 ```
 HKCU\SOFTWARE\DHTOOL\DH.IME.Spot
-HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run  ->  value "DH.IME.Spot"
+HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run  ->  "DH.IME.Spot" 값
 ```
 
-## License
+## 라이선스
 
 [MIT](LICENSE) © 2026 CYBERKDH
