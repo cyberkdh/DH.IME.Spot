@@ -37,6 +37,26 @@
 
 설치 관리자 없이 단일 실행 파일(~53 KB)이며 관리자 권한이 필요 없습니다.
 
+### 다운로드 후 실행이 차단될 때
+
+릴리스 zip은 인터넷에서 받은 파일이라 Windows가 차단 표시(Mark of the Web)를
+붙입니다. 압축을 풀면 exe에도 전파되어 SmartScreen이 실행을 막을 수 있습니다.
+(코드 서명이 없는 개인 유틸리티라 발생하는 정상 동작입니다.)
+
+풀기 **전에** zip에서 차단을 해제하는 것이 가장 깔끔합니다:
+
+1. 받은 `DH.IME.Spot-vX.X.X.X.zip` 우클릭 → **속성**
+2. 하단의 **[차단 해제] / [Unblock]** 체크 → **확인**
+3. 그 다음 압축을 풀면 됩니다.
+
+이미 풀었다면 exe에 같은 방법을 쓰거나, PowerShell에서:
+
+```powershell
+Get-ChildItem -Recurse | Unblock-File
+```
+
+SmartScreen 파란 창이 떠도 **추가 정보 → 실행**으로 진행할 수 있습니다.
+
 ![Options](docs/options.png)
 
 ## 빌드

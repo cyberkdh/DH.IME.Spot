@@ -37,6 +37,26 @@ so you always know which language you are about to type on a multi-monitor deskt
 
 The application is a single self-contained `.exe` (~53 KB). No installer, no admin rights.
 
+### If Windows blocks the downloaded file
+
+The release zip is downloaded from the internet, so Windows tags it with the
+Mark of the Web. Extracting propagates that tag to the `.exe`, and SmartScreen
+may block it from running. This is expected for an unsigned personal utility.
+
+The cleanest fix is to unblock the zip **before** extracting:
+
+1. Right-click the downloaded `DH.IME.Spot-vX.X.X.X.zip` → **Properties**
+2. Tick **Unblock** at the bottom → **OK**
+3. Then extract.
+
+If you already extracted, do the same on the `.exe`, or run in PowerShell:
+
+```powershell
+Get-ChildItem -Recurse | Unblock-File
+```
+
+If the blue SmartScreen dialog appears, choose **More info → Run anyway**.
+
 ![Options](docs/options.png)
 
 ## Build
