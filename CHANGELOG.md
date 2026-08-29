@@ -1,5 +1,7 @@
 # Changelog
 
+*English | [한국어](CHANGELOG.ko.md)*
+
 All notable changes to this project are documented in this file.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 

@@ -1,5 +1,7 @@
 # DH.IME.Spot
 
+*English | [한국어](README.ko.md)*
+
 A lightweight Windows tray utility that shows the current **Korean / English IME state**
 as a small badge near your mouse cursor, the active window, and/or each monitor —
 so you always know which language you are about to type on a multi-monitor desktop.
