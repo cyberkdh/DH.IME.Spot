@@ -19,6 +19,13 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Install .NET Framework 4.6 Developer Pack
+        shell: pwsh
+        run: |
+          choco install netfx-4.6-devpack -y --no-progress
+          if ($LASTEXITCODE -eq 3010) { exit 0 }
+          exit $LASTEXITCODE
+
       - name: Build project (Release)
         run: msbuild DH.IME.SpotSol\workspace\DH.IME.Spot\DH.IME.Spot.csproj /restore /t:Build /p:Configuration=Release /v:minimal
 
