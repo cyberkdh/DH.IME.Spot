@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build project (Release)
+        run: msbuild DH.IME.SpotSol\workspace\DH.IME.Spot\DH.IME.Spot.csproj /restore /t:Build /p:Configuration=Release /v:minimal
+
+      - name: Stage release package
+        shell: pwsh
+        run: |
+          $stageDir = "DH.IME.Spot-${{ github.ref_name }}"
+          if (Test-Path -LiteralPath $stageDir) {
+            Remove-Item -LiteralPath $stageDir -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Path $stageDir | Out-Null
+          Copy-Item -Path "DH.IME.SpotSol\output\Release\DH.IME.Spot.exe" -Destination $stageDir -Force
+          Copy-Item -Path "DH.IME.SpotSol\output\Release\DH.IME.Spot.exe.config" -Destination $stageDir -Force
+
+      - name: Zip release package
+        shell: pwsh
+        run: |
+          $stageDir = "DH.IME.Spot-${{ github.ref_name }}"
+          $zipPath = "DH.IME.Spot-${{ github.ref_name }}.zip"
+          if (Test-Path -LiteralPath $zipPath) {
+            Remove-Item -LiteralPath $zipPath -Force
+          }
+
+          Compress-Archive -Path "$stageDir\*" -DestinationPath $zipPath
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DH.IME.Spot-${{ github.ref_name }}.zip
+          generate_release_notes: true
