@@ -14,10 +14,19 @@ namespace DH.IME.Spot.Core {
 
 		public static ImeState Query(ForegroundInfo foreground) {
 			bool bkoreanlayout = IsKoreanLayout(foreground.ThreadId);
+			bool bcapslock = IsToggled(NativeConstants.VK_CAPITAL);
+			bool bnumlock = IsToggled(NativeConstants.VK_NUMLOCK);
+			bool bscrolllock = IsToggled(NativeConstants.VK_SCROLL);
 
 			IntPtr himewnd = NativeMethods.ImmGetDefaultIMEWnd(foreground.Hwnd);
 			if (himewnd == IntPtr.Zero) {
-				return new ImeState(bkoreanlayout ? enumImeKind.Latin : enumImeKind.Unknown, false, bkoreanlayout);
+				return new ImeState(
+					bkoreanlayout ? enumImeKind.Latin : enumImeKind.Unknown,
+					false,
+					bkoreanlayout,
+					bcapslock,
+					bnumlock,
+					bscrolllock);
 			}
 
 			IntPtr hopenresult;
@@ -56,7 +65,18 @@ namespace DH.IME.Spot.Core {
 				ekind = enumImeKind.Latin;
 			}
 
-			return new ImeState(ekind, bfullshape, bkoreanlayout);
+			return new ImeState(ekind, bfullshape, bkoreanlayout, bcapslock, bnumlock, bscrolllock);
+		}
+
+		public static ImeState UnknownWithGlobalLocks() {
+			return ImeState.Unknown.WithLocks(
+				IsToggled(NativeConstants.VK_CAPITAL),
+				IsToggled(NativeConstants.VK_NUMLOCK),
+				IsToggled(NativeConstants.VK_SCROLL));
+		}
+
+		private static bool IsToggled(int nvirtkey) {
+			return (NativeMethods.GetKeyState(nvirtkey) & 0x0001) != 0;
 		}
 
 		private static bool IsKoreanLayout(uint nthreadid) {

@@ -60,13 +60,18 @@
     <Compile Include="Core\AppSettings.cs" />
     <Compile Include="Core\SettingsStore.cs" />
     <Compile Include="Overlay\BadgeRenderer.cs" />
+    <None Include="Overlay\BadgeRenderer.EdgeBar.cs" />
+    <None Include="Overlay\BadgeRenderer.MicroDot.cs" />
     <Compile Include="Overlay\OverlayWindow.cs" />
     <Compile Include="Overlay\BadgeController.cs" />
+    <Compile Include="Overlay\TransientFlash.cs" />
     <Compile Include="Overlay\Placement\IBadgePlacement.cs" />
     <Compile Include="Overlay\Placement\CornerPlacement.cs" />
     <Compile Include="Overlay\Placement\ActiveWindowCornerPlacement.cs" />
     <Compile Include="Overlay\Placement\CursorCompanionPlacement.cs" />
     <Compile Include="Overlay\Placement\PerMonitorWidgetPlacement.cs" />
+    <None Include="Overlay\Placement\EdgeBarPlacement.cs" />
+    <None Include="Overlay\Placement\MicroDotPlacement.cs" />
     <Compile Include="UI\StateIconRenderer.cs" />
     <Compile Include="UI\AboutForm.cs">
       <SubType>Form</SubType>

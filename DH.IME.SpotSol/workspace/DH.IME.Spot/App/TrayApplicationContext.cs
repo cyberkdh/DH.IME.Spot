@@ -55,7 +55,8 @@ namespace DH.IME.Spot.App {
 			m_badge = new BadgeController(m_settings);
 			m_badge.Start();
 
-			m_watcher = new ImeWatcher(DEFAULT_POLL_INTERVAL_MS);
+			int npollinterval = m_settings != null ? m_settings.PollIntervalMs : DEFAULT_POLL_INTERVAL_MS;
+			m_watcher = new ImeWatcher(npollinterval);
 			m_watcher.ImeStateChanged += OnImeStateChanged;
 			m_watcher.Start();
 
@@ -76,12 +77,12 @@ namespace DH.IME.Spot.App {
 			}
 
 			m_icoState = ico;
-			m_notifyIcon.Text = BuildTooltip(e.State);
+			m_notifyIcon.Text = BuildTooltip(e.State, m_settings);
 
 			m_badge.SetState(e.State, e.Foreground.Hwnd);
 		}
 
-		private static string BuildTooltip(ImeState state) {
+		private static string BuildTooltip(ImeState state, AppSettings settings) {
 			string strlabel;
 			switch (state.Kind) {
 				case enumImeKind.Hangul:
@@ -95,7 +96,33 @@ namespace DH.IME.Spot.App {
 					break;
 			}
 
-			return "DH.IME.Spot - " + strlabel;
+			string strlocks = BuildLockSuffix(state, settings);
+			return "DH.IME.Spot - " + strlabel + strlocks;
+		}
+
+		private static string BuildLockSuffix(ImeState state, AppSettings settings) {
+			bool bcaps = state.CapsLock == true && (settings == null || settings.ShowCapsLock == true);
+			bool bnum = state.NumLock == true && (settings == null || settings.ShowNumLock == true);
+			bool bscroll = state.ScrollLock == true && (settings == null || settings.ShowScrollLock == true);
+
+			if (bcaps == false && bnum == false && bscroll == false) {
+				return string.Empty;
+			}
+
+			string strjoined = string.Empty;
+			if (bcaps == true) {
+				strjoined = "Caps";
+			}
+
+			if (bnum == true) {
+				strjoined = strjoined.Length > 0 ? strjoined + " / Num" : "Num";
+			}
+
+			if (bscroll == true) {
+				strjoined = strjoined.Length > 0 ? strjoined + " / Scroll" : "Scroll";
+			}
+
+			return " [" + strjoined + "]";
 		}
 
 		private void OnPauseOverlay(object sender, EventArgs e) {
@@ -128,6 +155,10 @@ namespace DH.IME.Spot.App {
 		private void OnOptionsApplied(object sender, OptionsAppliedEventArgs e) {
 			m_settings = e.Settings;
 			m_badge.ApplySettings(m_settings);
+
+			if (m_watcher != null) {
+				m_watcher.PollIntervalMs = m_settings.PollIntervalMs;
+			}
 		}
 
 		private void ShowAbout() {

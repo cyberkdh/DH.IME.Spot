@@ -144,7 +144,9 @@ namespace DH.IME.Spot.Core {
 			m_bPolling = true;
 			try {
 				ForegroundInfo foreground = ForegroundTracker.Current();
-				ImeState state = foreground.IsValid == true ? ImeQuery.Query(foreground) : ImeState.Unknown;
+				ImeState state = foreground.IsValid == true
+					? ImeQuery.Query(foreground)
+					: ImeQuery.UnknownWithGlobalLocks();
 
 				if (m_bHasLast == true && state.Equals(m_lastState) == true) {
 					return;

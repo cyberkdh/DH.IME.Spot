@@ -36,6 +36,9 @@ namespace DH.IME.Spot.Interop {
 		[DllImport("user32.dll")]
 		public static extern IntPtr GetKeyboardLayout(uint idThread);
 
+		[DllImport("user32.dll")]
+		public static extern short GetKeyState(int nVirtKey);
+
 		[DllImport("user32.dll", SetLastError = true)]
 		public static extern IntPtr SendMessageTimeout(
 			IntPtr hWnd,

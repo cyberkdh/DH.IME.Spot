@@ -22,6 +22,10 @@ namespace DH.IME.Spot.Overlay {
 		private const int CURSOR_IDLE_TICKS = 40;
 		private const int OFFSCREEN_THRESHOLD = -30000;
 
+		private static readonly Color CLR_FLASH_CAPS = Color.FromArgb(0xF5, 0xA6, 0x23);
+		private static readonly Color CLR_FLASH_NUM = Color.FromArgb(0x2E, 0xA0, 0x4A);
+		private static readonly Color CLR_FLASH_SCROLL = Color.FromArgb(0x8E, 0x5B, 0xD0);
+
 		private readonly Timer m_tmrTrack;
 		private readonly Timer m_tmrCursor;
 		private readonly int m_nOwnProcessId;
@@ -42,6 +46,39 @@ namespace DH.IME.Spot.Overlay {
 		private enumBadgeCorner m_eMonitorCorner;
 		private enumMonitorWidgetScope m_eMonitorScope;
 
+		private bool m_bShowCaps;
+		private bool m_bShowNum;
+		private bool m_bShowScroll;
+		private enumBadgeCorner m_eCapsCorner;
+		private enumBadgeCorner m_eNumCorner;
+		private enumBadgeCorner m_eScrollCorner;
+		private int m_nCapsDotSize;
+		private int m_nNumDotSize;
+		private int m_nScrollDotSize;
+		private enumLockDotColor m_eCapsDotColor;
+		private enumLockDotColor m_eNumDotColor;
+		private enumLockDotColor m_eScrollDotColor;
+		private bool m_bBadgeShadow;
+		private bool m_bBadgeLockPill;
+
+		private bool m_bFadeEnabled;
+		private int m_nFadeDelayMs;
+		private enumFadeIdleAction m_eFadeAction;
+		private int m_nFadeDimPercent;
+		private bool m_bIdleActive;
+		private readonly Timer m_tmrIdle;
+
+		private bool m_bFlashEnabled;
+		private bool m_bFlashIme;
+		private bool m_bFlashCaps;
+		private bool m_bFlashNum;
+		private bool m_bFlashScroll;
+		private int m_nFlashDurationMs;
+		private enumFlashAnchor m_eFlashAnchor;
+		private enumFlashSize m_eFlashSize;
+		private bool m_bFlashPrimed;
+		private readonly TransientFlash m_flash;
+
 		public BadgeController(AppSettings settings) {
 			m_nOwnProcessId = Process.GetCurrentProcess().Id;
 			m_state = ImeState.Unknown;
@@ -53,6 +90,7 @@ namespace DH.IME.Spot.Overlay {
 
 			m_cursorSlot = m_arrSlots[1];
 			m_lstMonitorSlots = new List<Slot>();
+			m_flash = new TransientFlash();
 			m_ptLastCursor = new Point(int.MinValue, int.MinValue);
 
 			m_tmrTrack = new Timer();
@@ -62,6 +100,10 @@ namespace DH.IME.Spot.Overlay {
 			m_tmrCursor = new Timer();
 			m_tmrCursor.Interval = CURSOR_INTERVAL_MS;
 			m_tmrCursor.Tick += OnCursorTick;
+
+			m_tmrIdle = new Timer();
+			m_tmrIdle.Interval = 2000;
+			m_tmrIdle.Tick += OnIdleTick;
 
 			ApplySettings(settings ?? AppSettings.Defaults());
 		}
@@ -74,6 +116,7 @@ namespace DH.IME.Spot.Overlay {
 			m_bStarted = true;
 			m_tmrTrack.Start();
 			UpdateCursorTimer();
+			RestartIdleTimer();
 		}
 
 		public void SetState(ImeState state) {
@@ -81,11 +124,15 @@ namespace DH.IME.Spot.Overlay {
 		}
 
 		public void SetState(ImeState state, IntPtr hforeground) {
+			ImeState stateold = m_state;
 			m_state = state;
 			m_hForegroundHint = hforeground;
 			m_bForegroundHintValid = hforeground != IntPtr.Zero;
+			ClearIdle();
 			Refresh();
+			EvaluateFlash(stateold, state);
 			m_bForegroundHintValid = false;
+			RestartIdleTimer();
 		}
 
 		public void ForceRefresh() {
@@ -114,8 +161,10 @@ namespace DH.IME.Spot.Overlay {
 			}
 
 			m_bPaused = bpaused;
+			ClearIdle();
 			UpdateCursorTimer();
 			Refresh();
+			RestartIdleTimer();
 		}
 
 		public void ApplySettings(AppSettings settings) {
@@ -127,6 +176,20 @@ namespace DH.IME.Spot.Overlay {
 			copy.Normalize();
 
 			m_nBackgroundAlpha = copy.BackgroundAlpha;
+			m_bShowCaps = copy.ShowCapsLock;
+			m_bShowNum = copy.ShowNumLock;
+			m_bShowScroll = copy.ShowScrollLock;
+			m_eCapsCorner = copy.CapsLockCorner;
+			m_eNumCorner = copy.NumLockCorner;
+			m_eScrollCorner = copy.ScrollLockCorner;
+			m_nCapsDotSize = copy.CapsLockDotSize;
+			m_nNumDotSize = copy.NumLockDotSize;
+			m_nScrollDotSize = copy.ScrollLockDotSize;
+			m_eCapsDotColor = copy.CapsLockDotColor;
+			m_eNumDotColor = copy.NumLockDotColor;
+			m_eScrollDotColor = copy.ScrollLockDotColor;
+			m_bBadgeShadow = copy.BadgeShadow;
+			m_bBadgeLockPill = copy.BadgeLockPill;
 
 			foreach (Slot slot in m_arrSlots) {
 				switch (slot.Mode) {
@@ -162,8 +225,24 @@ namespace DH.IME.Spot.Overlay {
 				HideMonitorSlots();
 			}
 
+			m_bFadeEnabled = copy.FadeIdleEnabled;
+			m_nFadeDelayMs = copy.FadeIdleDelayMs;
+			m_eFadeAction = copy.FadeIdleAction;
+			m_nFadeDimPercent = copy.FadeIdleDimPercent;
+
+			m_bFlashEnabled = copy.FlashEnabled;
+			m_bFlashIme = copy.FlashOnImeSwitch;
+			m_bFlashCaps = copy.FlashOnCapsLock;
+			m_bFlashNum = copy.FlashOnNumLock;
+			m_bFlashScroll = copy.FlashOnScrollLock;
+			m_nFlashDurationMs = copy.FlashDurationMs;
+			m_eFlashAnchor = copy.FlashAnchor;
+			m_eFlashSize = copy.FlashSize;
+
+			ClearIdle();
 			UpdateCursorTimer();
 			Refresh();
+			RestartIdleTimer();
 		}
 
 		private void UpdateCursorTimer() {
@@ -178,6 +257,169 @@ namespace DH.IME.Spot.Overlay {
 			}
 			else {
 				m_tmrCursor.Stop();
+			}
+		}
+
+		private void RestartIdleTimer() {
+			ClearIdle();
+			m_tmrIdle.Stop();
+
+			bool bshouldrun = m_bFadeEnabled == true && m_bStarted == true
+				&& m_bDisposed == false && m_bPaused == false;
+			if (bshouldrun == false) {
+				return;
+			}
+
+			int ndelay = m_nFadeDelayMs < 1 ? 1 : m_nFadeDelayMs;
+			m_tmrIdle.Interval = ndelay;
+			m_tmrIdle.Start();
+		}
+
+		private void OnIdleTick(object sender, EventArgs e) {
+			m_tmrIdle.Stop();
+
+			if (m_bFadeEnabled == false || m_bDisposed == true || m_bPaused == true) {
+				return;
+			}
+
+			m_bIdleActive = true;
+			ApplyIdleToSlot(m_arrSlots[0]);
+			ApplyIdleToSlot(m_arrSlots[1]);
+
+			foreach (Slot slot in m_lstMonitorSlots) {
+				ApplyIdleToSlot(slot);
+			}
+		}
+
+		private void ApplyIdleToSlot(Slot slot) {
+			if (slot.Visible == false) {
+				return;
+			}
+
+			slot.Window.ApplyIdleModifier(m_eFadeAction, m_nFadeDimPercent);
+		}
+
+		private void ClearIdle() {
+			if (m_bIdleActive == false) {
+				return;
+			}
+
+			m_bIdleActive = false;
+			ClearIdleOnSlot(m_arrSlots[0]);
+			ClearIdleOnSlot(m_arrSlots[1]);
+
+			foreach (Slot slot in m_lstMonitorSlots) {
+				ClearIdleOnSlot(slot);
+			}
+		}
+
+		private static void ClearIdleOnSlot(Slot slot) {
+			if (slot.Window.IsIdleModified == true) {
+				slot.Window.ClearIdleModifier();
+			}
+		}
+
+		private void EvaluateFlash(ImeState stateold, ImeState statenew) {
+			if (m_bFlashPrimed == false) {
+				m_bFlashPrimed = true;
+				return;
+			}
+
+			if (m_bFlashEnabled == false || m_bPaused == true || m_bDisposed == true) {
+				return;
+			}
+
+			if (m_bFlashIme == true && statenew.Kind != enumImeKind.Unknown
+				&& stateold.Kind != enumImeKind.Unknown && stateold.Kind != statenew.Kind) {
+				FireFlash(FlashGlyph(statenew.Kind), FlashColor(statenew.Kind), true);
+			}
+
+			if (m_bFlashCaps == true && stateold.CapsLock != statenew.CapsLock) {
+				FireFlash("A", CLR_FLASH_CAPS, statenew.CapsLock);
+			}
+
+			if (m_bFlashNum == true && stateold.NumLock != statenew.NumLock) {
+				FireFlash("1", CLR_FLASH_NUM, statenew.NumLock);
+			}
+
+			if (m_bFlashScroll == true && stateold.ScrollLock != statenew.ScrollLock) {
+				FireFlash("S", CLR_FLASH_SCROLL, statenew.ScrollLock);
+			}
+		}
+
+		private void FireFlash(string strglyph, Color clrbase, bool bon) {
+			Point ptcenter;
+			if (TryGetFlashAnchor(out ptcenter) == false) {
+				return;
+			}
+
+			MonitorMetrics monitor = MonitorInfo.ForPoint(ptcenter);
+			int nsize = monitor.Scale(FlashBaseSize(m_eFlashSize));
+
+			using (Bitmap bm = BadgeRenderer.RenderFlash(nsize, clrbase, strglyph, bon)) {
+				m_flash.Show(bm, ptcenter, m_nFlashDurationMs);
+			}
+		}
+
+		private bool TryGetFlashAnchor(out Point ptcenter) {
+			ptcenter = Point.Empty;
+
+			if (m_eFlashAnchor == enumFlashAnchor.ActiveWindowCenter) {
+				RECT rcwindow;
+				MonitorMetrics monitorwindow;
+				if (TryResolveForeground(out rcwindow, out monitorwindow) == true) {
+					ptcenter = new Point((rcwindow.Left + rcwindow.Right) / 2, (rcwindow.Top + rcwindow.Bottom) / 2);
+					return true;
+				}
+			}
+
+			Point ptcursor;
+			if (TryGetCursor(out ptcursor) == false) {
+				return false;
+			}
+
+			if (m_eFlashAnchor == enumFlashAnchor.ScreenCenter) {
+				RECT rcarea = MonitorInfo.ForPoint(ptcursor).MonitorArea;
+				if (rcarea.Right > rcarea.Left && rcarea.Bottom > rcarea.Top) {
+					ptcenter = new Point((rcarea.Left + rcarea.Right) / 2, (rcarea.Top + rcarea.Bottom) / 2);
+					return true;
+				}
+			}
+
+			ptcenter = ptcursor;
+			return true;
+		}
+
+		private static string FlashGlyph(enumImeKind ekind) {
+			switch (ekind) {
+				case enumImeKind.Hangul:
+					return "K";
+				case enumImeKind.Latin:
+					return "E";
+				default:
+					return "?";
+			}
+		}
+
+		private static Color FlashColor(enumImeKind ekind) {
+			switch (ekind) {
+				case enumImeKind.Hangul:
+					return Color.FromArgb(0xD6, 0x45, 0x41);
+				case enumImeKind.Latin:
+					return Color.FromArgb(0x2E, 0x6D, 0xA4);
+				default:
+					return Color.FromArgb(0x75, 0x75, 0x75);
+			}
+		}
+
+		private static int FlashBaseSize(enumFlashSize esize) {
+			switch (esize) {
+				case enumFlashSize.Small:
+					return 28;
+				case enumFlashSize.Large:
+					return 56;
+				default:
+					return 40;
 			}
 		}
 
@@ -218,13 +460,22 @@ namespace DH.IME.Spot.Overlay {
 
 			m_ptLastCursor = ptcursor;
 
+			if (m_bIdleActive == true) {
+				ClearIdle();
+				RestartIdleTimer();
+				Refresh();
+			}
+
 			if (slot.Visible == false || slot.Current == null || slot.HasVisual == false) {
 				return;
 			}
 
 			MonitorMetrics monitor = MonitorInfo.ForPoint(ptcursor);
 			int nsize = BadgeRenderer.MeasureSize(monitor, slot.SizeScale);
-			VisualKey visualkey = new VisualKey(m_state, monitor.Dpi, nsize, m_nBackgroundAlpha);
+			VisualKey visualkey = new VisualKey(m_state, EffCaps(), EffNum(), EffScroll(),
+				m_bBadgeShadow, m_bBadgeLockPill, m_eCapsCorner, m_eNumCorner, m_eScrollCorner,
+				m_nCapsDotSize, m_nNumDotSize, m_nScrollDotSize, m_eCapsDotColor, m_eNumDotColor, m_eScrollDotColor,
+				monitor.Dpi, nsize, m_nBackgroundAlpha);
 
 			if (visualkey.Equals(slot.Visual) == false) {
 				RenderSlot(slot, new PlacementContext { Cursor = ptcursor, Monitor = monitor });
@@ -248,6 +499,10 @@ namespace DH.IME.Spot.Overlay {
 
 		private void Refresh() {
 			if (m_bDisposed == true) {
+				return;
+			}
+
+			if (m_bIdleActive == true) {
 				return;
 			}
 
@@ -360,13 +615,28 @@ namespace DH.IME.Spot.Overlay {
 			}
 		}
 
+		private bool EffCaps() {
+			return m_state.CapsLock == true && m_bShowCaps == true;
+		}
+
+		private bool EffNum() {
+			return m_state.NumLock == true && m_bShowNum == true;
+		}
+
+		private bool EffScroll() {
+			return m_state.ScrollLock == true && m_bShowScroll == true;
+		}
+
 		private void RenderSlot(Slot slot, PlacementContext context) {
 			int nsize = BadgeRenderer.MeasureSize(context.Monitor, slot.SizeScale);
 			context.BadgeSize = new Size(nsize, nsize);
 
 			Point ptlocation = slot.Placement.GetLocation(context);
 
-			VisualKey visualkey = new VisualKey(m_state, context.Monitor.Dpi, nsize, m_nBackgroundAlpha);
+			VisualKey visualkey = new VisualKey(m_state, EffCaps(), EffNum(), EffScroll(),
+				m_bBadgeShadow, m_bBadgeLockPill, m_eCapsCorner, m_eNumCorner, m_eScrollCorner,
+				m_nCapsDotSize, m_nNumDotSize, m_nScrollDotSize, m_eCapsDotColor, m_eNumDotColor, m_eScrollDotColor,
+				context.Monitor.Dpi, nsize, m_nBackgroundAlpha);
 			bool bvisualchanged = slot.HasVisual == false || visualkey.Equals(slot.Visual) == false;
 			bool bmoved = slot.Visible == false || ptlocation != slot.Location;
 			if (bvisualchanged == false && bmoved == false) {
@@ -375,7 +645,11 @@ namespace DH.IME.Spot.Overlay {
 
 			bool bcontentchanged = bvisualchanged == true || slot.Current == null;
 			if (bcontentchanged == true) {
-				Bitmap bm = BadgeRenderer.Render(m_state, context.Monitor, m_nBackgroundAlpha, nsize);
+				Bitmap bm = BadgeRenderer.Render(m_state, context.Monitor, m_nBackgroundAlpha, nsize,
+					m_bBadgeShadow, m_bBadgeLockPill, EffCaps(), EffNum(), EffScroll(),
+					m_eCapsCorner, m_eNumCorner, m_eScrollCorner,
+					m_nCapsDotSize, m_nNumDotSize, m_nScrollDotSize,
+					m_eCapsDotColor, m_eNumDotColor, m_eScrollDotColor);
 				if (slot.Current != null) {
 					slot.Current.Dispose();
 				}
@@ -485,6 +759,12 @@ namespace DH.IME.Spot.Overlay {
 			m_tmrCursor.Stop();
 			m_tmrCursor.Dispose();
 
+			m_tmrIdle.Tick -= OnIdleTick;
+			m_tmrIdle.Stop();
+			m_tmrIdle.Dispose();
+
+			m_flash.Dispose();
+
 			foreach (Slot slot in m_arrSlots) {
 				if (slot.Current != null) {
 					slot.Current.Dispose();
@@ -537,13 +817,45 @@ namespace DH.IME.Spot.Overlay {
 		private struct VisualKey : IEquatable<VisualKey> {
 			private readonly enumImeKind m_eKind;
 			private readonly bool m_bFullShape;
+			private readonly bool m_bCapsLock;
+			private readonly bool m_bNumLock;
+			private readonly bool m_bScrollLock;
+			private readonly bool m_bShadow;
+			private readonly bool m_bLockPill;
+			private readonly enumBadgeCorner m_eCornerCaps;
+			private readonly enumBadgeCorner m_eCornerNum;
+			private readonly enumBadgeCorner m_eCornerScroll;
+			private readonly int m_nDotCaps;
+			private readonly int m_nDotNum;
+			private readonly int m_nDotScroll;
+			private readonly enumLockDotColor m_eDotColorCaps;
+			private readonly enumLockDotColor m_eDotColorNum;
+			private readonly enumLockDotColor m_eDotColorScroll;
 			private readonly int m_nDpi;
 			private readonly int m_nSize;
 			private readonly int m_nAlpha;
 
-			public VisualKey(ImeState state, int ndpi, int nsize, int nalpha) {
+			public VisualKey(ImeState state, bool bcaps, bool bnum, bool bscroll, bool bshadow, bool blockpill,
+				enumBadgeCorner ecornercaps, enumBadgeCorner ecornernum, enumBadgeCorner ecornerscroll,
+				int ndotcaps, int ndotnum, int ndotscroll,
+				enumLockDotColor edotcolorcaps, enumLockDotColor edotcolornum, enumLockDotColor edotcolorscroll,
+				int ndpi, int nsize, int nalpha) {
 				m_eKind = state.Kind;
 				m_bFullShape = state.FullShape;
+				m_bCapsLock = bcaps;
+				m_bNumLock = bnum;
+				m_bScrollLock = bscroll;
+				m_bShadow = bshadow;
+				m_bLockPill = blockpill;
+				m_eCornerCaps = ecornercaps;
+				m_eCornerNum = ecornernum;
+				m_eCornerScroll = ecornerscroll;
+				m_nDotCaps = ndotcaps;
+				m_nDotNum = ndotnum;
+				m_nDotScroll = ndotscroll;
+				m_eDotColorCaps = edotcolorcaps;
+				m_eDotColorNum = edotcolornum;
+				m_eDotColorScroll = edotcolorscroll;
 				m_nDpi = ndpi;
 				m_nSize = nsize;
 				m_nAlpha = nalpha;
@@ -552,6 +864,20 @@ namespace DH.IME.Spot.Overlay {
 			public bool Equals(VisualKey other) {
 				return m_eKind == other.m_eKind
 					&& m_bFullShape == other.m_bFullShape
+					&& m_bCapsLock == other.m_bCapsLock
+					&& m_bNumLock == other.m_bNumLock
+					&& m_bScrollLock == other.m_bScrollLock
+					&& m_bShadow == other.m_bShadow
+					&& m_bLockPill == other.m_bLockPill
+					&& m_eCornerCaps == other.m_eCornerCaps
+					&& m_eCornerNum == other.m_eCornerNum
+					&& m_eCornerScroll == other.m_eCornerScroll
+					&& m_nDotCaps == other.m_nDotCaps
+					&& m_nDotNum == other.m_nDotNum
+					&& m_nDotScroll == other.m_nDotScroll
+					&& m_eDotColorCaps == other.m_eDotColorCaps
+					&& m_eDotColorNum == other.m_eDotColorNum
+					&& m_eDotColorScroll == other.m_eDotColorScroll
 					&& m_nDpi == other.m_nDpi
 					&& m_nSize == other.m_nSize
 					&& m_nAlpha == other.m_nAlpha;
@@ -564,6 +890,20 @@ namespace DH.IME.Spot.Overlay {
 			public override int GetHashCode() {
 				int nhash = (int)m_eKind;
 				nhash = (nhash * 397) ^ (m_bFullShape ? 1 : 0);
+				nhash = (nhash * 397) ^ (m_bCapsLock ? 1 : 0);
+				nhash = (nhash * 397) ^ (m_bNumLock ? 1 : 0);
+				nhash = (nhash * 397) ^ (m_bScrollLock ? 1 : 0);
+				nhash = (nhash * 397) ^ (m_bShadow ? 1 : 0);
+				nhash = (nhash * 397) ^ (m_bLockPill ? 1 : 0);
+				nhash = (nhash * 397) ^ (int)m_eCornerCaps;
+				nhash = (nhash * 397) ^ (int)m_eCornerNum;
+				nhash = (nhash * 397) ^ (int)m_eCornerScroll;
+				nhash = (nhash * 397) ^ m_nDotCaps;
+				nhash = (nhash * 397) ^ m_nDotNum;
+				nhash = (nhash * 397) ^ m_nDotScroll;
+				nhash = (nhash * 397) ^ (int)m_eDotColorCaps;
+				nhash = (nhash * 397) ^ (int)m_eDotColorNum;
+				nhash = (nhash * 397) ^ (int)m_eDotColorScroll;
 				nhash = (nhash * 397) ^ m_nDpi;
 				nhash = (nhash * 397) ^ m_nSize;
 				nhash = (nhash * 397) ^ m_nAlpha;

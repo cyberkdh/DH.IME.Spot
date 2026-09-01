@@ -26,6 +26,10 @@ namespace DH.IME.Spot.Interop {
 
 		public const int LANG_KOREAN = 0x0412;
 
+		public const int VK_CAPITAL = 0x14;
+		public const int VK_NUMLOCK = 0x90;
+		public const int VK_SCROLL = 0x91;
+
 		public const int GWL_EXSTYLE = -20;
 
 		public const int WS_EX_LAYERED = 0x00080000;
