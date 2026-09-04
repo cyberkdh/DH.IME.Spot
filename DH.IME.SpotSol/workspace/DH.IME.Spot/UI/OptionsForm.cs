@@ -35,6 +35,11 @@ namespace DH.IME.Spot.UI {
 			enumCursorBadgeSize.Scale150
 		};
 
+		private static readonly enumPlacementBoundsMode[] g_arrBoundsModes = {
+			enumPlacementBoundsMode.WorkArea,
+			enumPlacementBoundsMode.MonitorArea
+		};
+
 		private static readonly enumFadeIdleAction[] g_arrFadeActions = {
 			enumFadeIdleAction.Shrink,
 			enumFadeIdleAction.Dim,
@@ -113,11 +118,15 @@ namespace DH.IME.Spot.UI {
 
 			this.m_chkActiveWindow.Checked = copy.ActiveWindowEnabled;
 			this.m_cboActiveWindowCorner.SelectedIndex = IndexOfEnum(g_arrCorners, copy.ActiveWindowCorner);
+			this.m_txtHangulGlyph.Text = copy.HangulGlyph;
+			this.m_txtLatinGlyph.Text = copy.LatinGlyph;
 			this.m_chkCursor.Checked = copy.CursorEnabled;
 			this.m_cboCursorSize.SelectedIndex = IndexOfEnum(g_arrCursorSizes, copy.CursorBadgeSize);
+			this.m_cboCursorBounds.SelectedIndex = IndexOfEnum(g_arrBoundsModes, copy.CursorBoundsMode);
 			this.m_chkMonitorWidget.Checked = copy.MonitorWidgetEnabled;
 			this.m_cboMonitorScope.SelectedIndex = IndexOfEnum(g_arrScopes, copy.MonitorWidgetScope);
 			this.m_cboMonitorWidgetCorner.SelectedIndex = IndexOfEnum(g_arrCorners, copy.MonitorWidgetCorner);
+			this.m_cboMonitorBounds.SelectedIndex = IndexOfEnum(g_arrBoundsModes, copy.MonitorWidgetBoundsMode);
 			this.m_trkOpacity.Value = copy.BackgroundAlpha;
 			this.m_chkBadgeShadow.Checked = copy.BadgeShadow;
 
@@ -158,11 +167,15 @@ namespace DH.IME.Spot.UI {
 				ScrollLockDotColor = PickEnum(g_arrLockDotColors, this.m_cboScrollDotColor.SelectedIndex, enumLockDotColor.Purple),
 				ActiveWindowEnabled = this.m_chkActiveWindow.Checked,
 				ActiveWindowCorner = PickEnum(g_arrCorners, this.m_cboActiveWindowCorner.SelectedIndex, enumBadgeCorner.TopRight),
+				HangulGlyph = this.m_txtHangulGlyph.Text,
+				LatinGlyph = this.m_txtLatinGlyph.Text,
 				CursorEnabled = this.m_chkCursor.Checked,
 				CursorBadgeSize = PickEnum(g_arrCursorSizes, this.m_cboCursorSize.SelectedIndex, enumCursorBadgeSize.Scale75),
+				CursorBoundsMode = PickEnum(g_arrBoundsModes, this.m_cboCursorBounds.SelectedIndex, enumPlacementBoundsMode.MonitorArea),
 				MonitorWidgetEnabled = this.m_chkMonitorWidget.Checked,
 				MonitorWidgetCorner = PickEnum(g_arrCorners, this.m_cboMonitorWidgetCorner.SelectedIndex, enumBadgeCorner.BottomLeft),
 				MonitorWidgetScope = PickEnum(g_arrScopes, this.m_cboMonitorScope.SelectedIndex, enumMonitorWidgetScope.CurrentMonitor),
+				MonitorWidgetBoundsMode = PickEnum(g_arrBoundsModes, this.m_cboMonitorBounds.SelectedIndex, enumPlacementBoundsMode.WorkArea),
 				BackgroundAlpha = this.m_trkOpacity.Value,
 				BadgeShadow = this.m_chkBadgeShadow.Checked,
 				BadgeLockPill = this.m_chkBadgeLockPill.Checked,
@@ -227,8 +240,10 @@ namespace DH.IME.Spot.UI {
 		private void UpdateGroupEnabled() {
 			this.m_cboActiveWindowCorner.Enabled = this.m_chkActiveWindow.Checked;
 			this.m_cboCursorSize.Enabled = this.m_chkCursor.Checked;
+			this.m_cboCursorBounds.Enabled = this.m_chkCursor.Checked;
 			this.m_cboMonitorScope.Enabled = this.m_chkMonitorWidget.Checked;
 			this.m_cboMonitorWidgetCorner.Enabled = this.m_chkMonitorWidget.Checked;
+			this.m_cboMonitorBounds.Enabled = this.m_chkMonitorWidget.Checked;
 
 			bool bcaps = this.m_chkShowCaps.Checked;
 			bool bnum = this.m_chkShowNum.Checked;

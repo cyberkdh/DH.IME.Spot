@@ -8,31 +8,36 @@ so you always know which language you are about to type on a multi-monitor deskt
 
 ![DH.IME.Spot](docs/screenshot.png)
 
-- **Version:** 1.0.0.1
+- **Version:** 1.0.0.2
 - **Platform:** Windows 10 or later (x86/x64)
 - **Runtime:** .NET Framework 4.6 (ships with Windows 10+)
 - **Dependencies:** none (no NuGet packages)
 
 ## Features
 
-- **IME state badge** — a per-pixel alpha layered badge shows `K` (Korean) / `E` (English).
+- **IME state badge** — a per-pixel alpha layered badge shows user-configurable `Hangul glyph` / `Latin glyph`.
 - **Three placement modes, independently toggleable:**
   - *Active window corner* — badge pinned to a corner of the focused window.
-  - *Cursor companion* — badge follows the mouse cursor (smooth 60 Hz tracking, no global mouse hook).
-  - *Per-monitor widget* — a fixed badge in a chosen corner of every monitor (or the primary only).
-- **Adjustable opacity** (10 %–100 %); glyph and drop shadow fade together with the background.
+  - *Cursor companion* — badge follows the mouse cursor (smooth 60 Hz tracking, no global mouse hook, with `Work area` / `Full monitor` bounds selection).
+  - *Per-monitor widget* — a fixed badge in a chosen corner of the current monitor or all monitors, with `Work area` / `Full monitor` bounds selection.
+- **Two lock-indicator channels**
+  - `LockPill` — a small row of colored dots under the glyph
+  - `Track corner badge` — lock dots attached to the badge corners
+- **Per-lock options** — independent `Caps/Num/Scroll` tracking, corner, dot size, and dot color.
+- **Default badge opacity is 100 %** — glyph and shadow alpha scale with the background.
 - **Cursor badge size** option (25 %–150 %).
 - **Per-monitor DPI aware.**
 - **Full-screen aware** — badges hide automatically over exclusive / borderless full-screen apps.
 - **Run at startup** toggle.
 - **Pause overlay** from the tray menu (runtime only, not persisted).
+- tray icon **double click -> Options**.
 - Settings are stored in the **registry** — no config files are written.
 
 ## Install / Run
 
 1. Build (see below) or grab `DH.IME.Spot.exe` from a release.
 2. Run `DH.IME.Spot.exe`. It appears in the notification area (system tray).
-3. Right-click the tray icon → **Options…** to configure placement, opacity, size, and startup.
+3. Right-click or double-click the tray icon → **Options…** to configure placement, lock options, glyphs, opacity, size, and startup.
 4. Right-click → **Exit** to quit.
 
 The application is a single self-contained `.exe` (~53 KB). No installer, no admin rights.
@@ -57,7 +62,7 @@ Get-ChildItem -Recurse | Unblock-File
 
 If the blue SmartScreen dialog appears, choose **More info → Run anyway**.
 
-![Options](docs/options.png)
+![Options v1.0.0.2](docs/options2.png)
 
 ## Build
 
@@ -92,9 +97,20 @@ Settings key: `HKEY_CURRENT_USER\SOFTWARE\DHTOOL\DH.IME.Spot`
 | `ActiveWindowCorner` | REG_SZ | `TopLeft` / `TopRight` / `BottomLeft` / `BottomRight` |
 | `CursorEnabled` | DWORD | Cursor-companion badge on/off |
 | `CursorBadgeSize` | REG_SZ | `Scale25` … `Scale150` |
+| `CursorBoundsMode` | REG_SZ | `WorkArea` / `MonitorArea` |
 | `MonitorWidgetEnabled` | DWORD | Per-monitor widget badge on/off |
 | `MonitorWidgetCorner` | REG_SZ | Corner for the per-monitor widget |
-| `MonitorWidgetScope` | REG_SZ | `AllMonitors` / `PrimaryOnly` |
+| `MonitorWidgetScope` | REG_SZ | `CurrentMonitor` / `AllMonitors` |
+| `MonitorWidgetBoundsMode` | REG_SZ | `WorkArea` / `MonitorArea` |
+| `BadgeLockPill` | DWORD | Shows the under-glyph `LockPill` |
+| `ShowCapsLock` / `ShowNumLock` / `ShowScrollLock` | DWORD | Per-lock tracking on/off |
+| `CapsLockCorner` / `NumLockCorner` / `ScrollLockCorner` | REG_SZ | Corner for each lock dot |
+| `CapsLockDotSize` / `NumLockDotSize` / `ScrollLockDotSize` | DWORD | Size of each lock dot |
+| `CapsLockDotColor` / `NumLockDotColor` / `ScrollLockDotColor` | REG_SZ | Color of each lock dot |
+| `HangulGlyph` / `LatinGlyph` | REG_SZ | Custom glyphs used by the badge and flash |
+| `FlashEnabled` and other `Flash*` values | DWORD / REG_SZ | Change-flash options |
+| `FadeIdleEnabled` and other `Fade*` values | DWORD / REG_SZ | Idle-fade options |
+| `PollIntervalMs` | DWORD | IME polling interval |
 
 Run-at-startup is stored separately as value `DH.IME.Spot` under
 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`.

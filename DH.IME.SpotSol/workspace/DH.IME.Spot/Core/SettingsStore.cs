@@ -42,6 +42,8 @@ namespace DH.IME.Spot.Core {
 						settings.MonitorWidgetCorner = ReadEnum(regkey, "MonitorWidgetCorner", settings.MonitorWidgetCorner);
 						settings.MonitorWidgetScope = ReadEnum(regkey, "MonitorWidgetScope", settings.MonitorWidgetScope);
 						settings.CursorBadgeSize = ReadEnum(regkey, "CursorBadgeSize", settings.CursorBadgeSize);
+						settings.CursorBoundsMode = ReadEnum(regkey, "CursorBoundsMode", settings.CursorBoundsMode);
+						settings.MonitorWidgetBoundsMode = ReadEnum(regkey, "MonitorWidgetBoundsMode", settings.MonitorWidgetBoundsMode);
 
 						settings.ShowCapsLock = ReadBool(regkey, "ShowCapsLock", settings.ShowCapsLock);
 						settings.ShowNumLock = ReadBool(regkey, "ShowNumLock", settings.ShowNumLock);
@@ -72,6 +74,8 @@ namespace DH.IME.Spot.Core {
 						settings.FlashDurationMs = ReadInt(regkey, "FlashDurationMs", settings.FlashDurationMs);
 						settings.FlashAnchor = ReadEnum(regkey, "FlashAnchor", settings.FlashAnchor);
 						settings.FlashSize = ReadEnum(regkey, "FlashSize", settings.FlashSize);
+						settings.HangulGlyph = ReadString(regkey, "HangulGlyph", settings.HangulGlyph);
+						settings.LatinGlyph = ReadString(regkey, "LatinGlyph", settings.LatinGlyph);
 					}
 				}
 			}
@@ -103,9 +107,11 @@ namespace DH.IME.Spot.Core {
 						regkey.SetValue("ActiveWindowCorner", settings.ActiveWindowCorner.ToString(), RegistryValueKind.String);
 						regkey.SetValue("CursorEnabled", settings.CursorEnabled == true ? 1 : 0, RegistryValueKind.DWord);
 						regkey.SetValue("CursorBadgeSize", settings.CursorBadgeSize.ToString(), RegistryValueKind.String);
+						regkey.SetValue("CursorBoundsMode", settings.CursorBoundsMode.ToString(), RegistryValueKind.String);
 						regkey.SetValue("MonitorWidgetEnabled", settings.MonitorWidgetEnabled == true ? 1 : 0, RegistryValueKind.DWord);
 						regkey.SetValue("MonitorWidgetCorner", settings.MonitorWidgetCorner.ToString(), RegistryValueKind.String);
 						regkey.SetValue("MonitorWidgetScope", settings.MonitorWidgetScope.ToString(), RegistryValueKind.String);
+						regkey.SetValue("MonitorWidgetBoundsMode", settings.MonitorWidgetBoundsMode.ToString(), RegistryValueKind.String);
 
 						regkey.SetValue("ShowCapsLock", settings.ShowCapsLock == true ? 1 : 0, RegistryValueKind.DWord);
 						regkey.SetValue("ShowNumLock", settings.ShowNumLock == true ? 1 : 0, RegistryValueKind.DWord);
@@ -136,6 +142,8 @@ namespace DH.IME.Spot.Core {
 						regkey.SetValue("FlashDurationMs", settings.FlashDurationMs, RegistryValueKind.DWord);
 						regkey.SetValue("FlashAnchor", settings.FlashAnchor.ToString(), RegistryValueKind.String);
 						regkey.SetValue("FlashSize", settings.FlashSize.ToString(), RegistryValueKind.String);
+						regkey.SetValue("HangulGlyph", settings.HangulGlyph, RegistryValueKind.String);
+						regkey.SetValue("LatinGlyph", settings.LatinGlyph, RegistryValueKind.String);
 					}
 				}
 			}
@@ -191,6 +199,11 @@ namespace DH.IME.Spot.Core {
 			}
 
 			return fallback;
+		}
+
+		private static string ReadString(RegistryKey regkey, string strname, string strfallback) {
+			string strtext = regkey.GetValue(strname) as string;
+			return string.IsNullOrEmpty(strtext) == true ? strfallback : strtext;
 		}
 
 		private static bool IsRunAtStartup() {

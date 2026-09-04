@@ -50,7 +50,7 @@ namespace DH.IME.Spot.App {
 					onexit: OnExit)
 			};
 
-			m_notifyIcon.DoubleClick += OnAbout;
+			m_notifyIcon.DoubleClick += OnOptions;
 
 			m_badge = new BadgeController(m_settings);
 			m_badge.Start();

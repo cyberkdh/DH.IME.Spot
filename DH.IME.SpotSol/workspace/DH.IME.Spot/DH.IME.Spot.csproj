@@ -62,7 +62,9 @@
     <Compile Include="Overlay\BadgeRenderer.cs" />
     <None Include="Overlay\BadgeRenderer.EdgeBar.cs" />
     <None Include="Overlay\BadgeRenderer.MicroDot.cs" />
-    <Compile Include="Overlay\OverlayWindow.cs" />
+    <Compile Include="Overlay\OverlayWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Overlay\BadgeController.cs" />
     <Compile Include="Overlay\TransientFlash.cs" />
     <Compile Include="Overlay\Placement\IBadgePlacement.cs" />

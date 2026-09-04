@@ -7,6 +7,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////
 using System.Drawing;
 using DH.IME.Spot.Core;
+using DH.IME.Spot.Interop;
 
 namespace DH.IME.Spot.Overlay.Placement {
 	internal sealed class PerMonitorWidgetPlacement : IBadgePlacement {
@@ -18,12 +19,15 @@ namespace DH.IME.Spot.Overlay.Placement {
 
 		public Point GetLocation(PlacementContext context) {
 			int nmargin = context.Monitor.Scale(CornerPlacement.BaseMarginPx);
+			RECT rcbounds = context.BoundsMode == enumPlacementBoundsMode.MonitorArea
+				? context.Monitor.MonitorArea
+				: context.Monitor.WorkArea;
 			return CornerPlacement.Locate(
-				context.Monitor.WorkArea,
+				rcbounds,
 				context.BadgeSize,
 				m_eCorner,
 				nmargin,
-				context.Monitor.WorkArea);
+				rcbounds);
 		}
 	}
 }

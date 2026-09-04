@@ -76,21 +76,22 @@ namespace DH.IME.Spot.Overlay {
 			return Render(state, monitor, nbackgroundalpha, MeasureSize(monitor), true, false, false, false, false,
 				enumBadgeCorner.TopRight, enumBadgeCorner.BottomRight, enumBadgeCorner.BottomLeft,
 				DEFAULT_LOCK_DOT_PX, DEFAULT_LOCK_DOT_PX, DEFAULT_LOCK_DOT_PX,
-				enumLockDotColor.Amber, enumLockDotColor.Green, enumLockDotColor.Purple);
+				enumLockDotColor.Amber, enumLockDotColor.Green, enumLockDotColor.Purple, "K", "E");
 		}
 
 		public static Bitmap Render(ImeState state, MonitorMetrics monitor, int nbackgroundalpha, int nsize) {
 			return Render(state, monitor, nbackgroundalpha, nsize, true, false, false, false, false,
 				enumBadgeCorner.TopRight, enumBadgeCorner.BottomRight, enumBadgeCorner.BottomLeft,
 				DEFAULT_LOCK_DOT_PX, DEFAULT_LOCK_DOT_PX, DEFAULT_LOCK_DOT_PX,
-				enumLockDotColor.Amber, enumLockDotColor.Green, enumLockDotColor.Purple);
+				enumLockDotColor.Amber, enumLockDotColor.Green, enumLockDotColor.Purple, "K", "E");
 		}
 
 		public static Bitmap Render(ImeState state, MonitorMetrics monitor, int nbackgroundalpha, int nsize,
 			bool bshadow, bool blockpill, bool bcaps, bool bnum, bool bscroll,
 			enumBadgeCorner ecornercaps, enumBadgeCorner ecornernum, enumBadgeCorner ecornerscroll,
 			int ncapsdotpx, int nnumdotpx, int nscrolldotpx,
-			enumLockDotColor ecolorcaps, enumLockDotColor ecolornum, enumLockDotColor ecolorscroll) {
+			enumLockDotColor ecolorcaps, enumLockDotColor ecolornum, enumLockDotColor ecolorscroll,
+			string strhangulglyph, string strlatinglyph) {
 			int nalpha = Clamp(nbackgroundalpha, AppSettings.MinBackgroundAlpha, AppSettings.MaxBackgroundAlpha);
 
 			double ffade = nalpha / (double)AppSettings.MaxBackgroundAlpha;
@@ -109,11 +110,11 @@ namespace DH.IME.Spot.Overlay {
 			switch (state.Kind) {
 				case enumImeKind.Hangul:
 					clrbackground = Color.FromArgb(nalpha, 0xD6, 0x45, 0x41);
-					strtext = "K";
+					strtext = string.IsNullOrEmpty(strhangulglyph) == true ? "K" : strhangulglyph;
 					break;
 				case enumImeKind.Latin:
 					clrbackground = Color.FromArgb(nalpha, 0x2E, 0x6D, 0xA4);
-					strtext = "E";
+					strtext = string.IsNullOrEmpty(strlatinglyph) == true ? "E" : strlatinglyph;
 					break;
 				default:
 					clrbackground = Color.FromArgb(nalpha, 0x75, 0x75, 0x75);

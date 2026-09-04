@@ -6,6 +6,7 @@
 //	Copyrights		: Copyright (C)CYBERKDH. All Rights Reserved.
 //////////////////////////////////////////////////////////////////////////////////////////////////
 using System.Drawing;
+using DH.IME.Spot.Core;
 using DH.IME.Spot.Interop;
 
 namespace DH.IME.Spot.Overlay.Placement {
@@ -14,7 +15,9 @@ namespace DH.IME.Spot.Overlay.Placement {
 
 		public Point GetLocation(PlacementContext context) {
 			int noffset = context.Monitor.Scale(BASE_OFFSET_PX);
-			RECT rcbounds = context.Monitor.WorkArea;
+			RECT rcbounds = context.BoundsMode == enumPlacementBoundsMode.MonitorArea
+				? context.Monitor.MonitorArea
+				: context.Monitor.WorkArea;
 
 			int nx = context.Cursor.X + noffset;
 			int ny = context.Cursor.Y + noffset;

@@ -45,6 +45,8 @@ namespace DH.IME.Spot.Overlay {
 		private bool m_bMonitorActive;
 		private enumBadgeCorner m_eMonitorCorner;
 		private enumMonitorWidgetScope m_eMonitorScope;
+		private enumPlacementBoundsMode m_eCursorBoundsMode;
+		private enumPlacementBoundsMode m_eMonitorBoundsMode;
 
 		private bool m_bShowCaps;
 		private bool m_bShowNum;
@@ -76,6 +78,8 @@ namespace DH.IME.Spot.Overlay {
 		private int m_nFlashDurationMs;
 		private enumFlashAnchor m_eFlashAnchor;
 		private enumFlashSize m_eFlashSize;
+		private string m_strHangulGlyph;
+		private string m_strLatinGlyph;
 		private bool m_bFlashPrimed;
 		private readonly TransientFlash m_flash;
 
@@ -190,6 +194,7 @@ namespace DH.IME.Spot.Overlay {
 			m_eScrollDotColor = copy.ScrollLockDotColor;
 			m_bBadgeShadow = copy.BadgeShadow;
 			m_bBadgeLockPill = copy.BadgeLockPill;
+			m_eCursorBoundsMode = copy.CursorBoundsMode;
 
 			foreach (Slot slot in m_arrSlots) {
 				switch (slot.Mode) {
@@ -215,6 +220,7 @@ namespace DH.IME.Spot.Overlay {
 			m_bMonitorActive = copy.MonitorWidgetEnabled;
 			m_eMonitorCorner = copy.MonitorWidgetCorner;
 			m_eMonitorScope = copy.MonitorWidgetScope;
+			m_eMonitorBoundsMode = copy.MonitorWidgetBoundsMode;
 
 			foreach (Slot slot in m_lstMonitorSlots) {
 				slot.Placement = new PerMonitorWidgetPlacement(m_eMonitorCorner);
@@ -238,6 +244,8 @@ namespace DH.IME.Spot.Overlay {
 			m_nFlashDurationMs = copy.FlashDurationMs;
 			m_eFlashAnchor = copy.FlashAnchor;
 			m_eFlashSize = copy.FlashSize;
+			m_strHangulGlyph = copy.HangulGlyph;
+			m_strLatinGlyph = copy.LatinGlyph;
 
 			ClearIdle();
 			UpdateCursorTimer();
@@ -390,12 +398,12 @@ namespace DH.IME.Spot.Overlay {
 			return true;
 		}
 
-		private static string FlashGlyph(enumImeKind ekind) {
+		private string FlashGlyph(enumImeKind ekind) {
 			switch (ekind) {
 				case enumImeKind.Hangul:
-					return "K";
+					return m_strHangulGlyph;
 				case enumImeKind.Latin:
-					return "E";
+					return m_strLatinGlyph;
 				default:
 					return "?";
 			}
@@ -475,17 +483,22 @@ namespace DH.IME.Spot.Overlay {
 			VisualKey visualkey = new VisualKey(m_state, EffCaps(), EffNum(), EffScroll(),
 				m_bBadgeShadow, m_bBadgeLockPill, m_eCapsCorner, m_eNumCorner, m_eScrollCorner,
 				m_nCapsDotSize, m_nNumDotSize, m_nScrollDotSize, m_eCapsDotColor, m_eNumDotColor, m_eScrollDotColor,
-				monitor.Dpi, nsize, m_nBackgroundAlpha);
+				monitor.Dpi, nsize, m_nBackgroundAlpha, m_strHangulGlyph, m_strLatinGlyph);
 
 			if (visualkey.Equals(slot.Visual) == false) {
-				RenderSlot(slot, new PlacementContext { Cursor = ptcursor, Monitor = monitor });
+				RenderSlot(slot, new PlacementContext {
+					Cursor = ptcursor,
+					Monitor = monitor,
+					BoundsMode = m_eCursorBoundsMode
+				});
 				return;
 			}
 
 			PlacementContext context = new PlacementContext {
 				Cursor = ptcursor,
 				Monitor = monitor,
-				BadgeSize = new Size(nsize, nsize)
+				BadgeSize = new Size(nsize, nsize),
+				BoundsMode = m_eCursorBoundsMode
 			};
 
 			Point ptlocation = slot.Placement.GetLocation(context);
@@ -534,6 +547,7 @@ namespace DH.IME.Spot.Overlay {
 
 				if (slot.Mode == enumDisplayMode.CursorCompanion) {
 					context.Monitor = MonitorInfo.ForPoint(ptcursor);
+					context.BoundsMode = m_eCursorBoundsMode;
 				}
 				else {
 					if (bforegroundresolved == false) {
@@ -548,6 +562,7 @@ namespace DH.IME.Spot.Overlay {
 
 					context.WindowRect = rcwindow;
 					context.Monitor = monitorwindow;
+					context.BoundsMode = enumPlacementBoundsMode.WorkArea;
 				}
 
 				RenderSlot(slot, context);
@@ -570,7 +585,10 @@ namespace DH.IME.Spot.Overlay {
 					Rectangle rcbounds = arrscreens[i].Bounds;
 					Point ptcenter = new Point(rcbounds.Left + rcbounds.Width / 2, rcbounds.Top + rcbounds.Height / 2);
 					MonitorMetrics monitor = MonitorInfo.ForPoint(ptcenter);
-					RenderSlot(m_lstMonitorSlots[i], new PlacementContext { Monitor = monitor });
+					RenderSlot(m_lstMonitorSlots[i], new PlacementContext {
+						Monitor = monitor,
+						BoundsMode = m_eMonitorBoundsMode
+					});
 				}
 
 				return;
@@ -584,7 +602,10 @@ namespace DH.IME.Spot.Overlay {
 			}
 
 			MonitorMetrics monitorcursor = MonitorInfo.ForPoint(ptcursor);
-			RenderSlot(m_lstMonitorSlots[0], new PlacementContext { Monitor = monitorcursor });
+			RenderSlot(m_lstMonitorSlots[0], new PlacementContext {
+				Monitor = monitorcursor,
+				BoundsMode = m_eMonitorBoundsMode
+			});
 		}
 
 		private void EnsureMonitorSlotCount(int ncount) {
@@ -636,7 +657,7 @@ namespace DH.IME.Spot.Overlay {
 			VisualKey visualkey = new VisualKey(m_state, EffCaps(), EffNum(), EffScroll(),
 				m_bBadgeShadow, m_bBadgeLockPill, m_eCapsCorner, m_eNumCorner, m_eScrollCorner,
 				m_nCapsDotSize, m_nNumDotSize, m_nScrollDotSize, m_eCapsDotColor, m_eNumDotColor, m_eScrollDotColor,
-				context.Monitor.Dpi, nsize, m_nBackgroundAlpha);
+				context.Monitor.Dpi, nsize, m_nBackgroundAlpha, m_strHangulGlyph, m_strLatinGlyph);
 			bool bvisualchanged = slot.HasVisual == false || visualkey.Equals(slot.Visual) == false;
 			bool bmoved = slot.Visible == false || ptlocation != slot.Location;
 			if (bvisualchanged == false && bmoved == false) {
@@ -649,7 +670,8 @@ namespace DH.IME.Spot.Overlay {
 					m_bBadgeShadow, m_bBadgeLockPill, EffCaps(), EffNum(), EffScroll(),
 					m_eCapsCorner, m_eNumCorner, m_eScrollCorner,
 					m_nCapsDotSize, m_nNumDotSize, m_nScrollDotSize,
-					m_eCapsDotColor, m_eNumDotColor, m_eScrollDotColor);
+					m_eCapsDotColor, m_eNumDotColor, m_eScrollDotColor,
+					m_strHangulGlyph, m_strLatinGlyph);
 				if (slot.Current != null) {
 					slot.Current.Dispose();
 				}
@@ -834,12 +856,14 @@ namespace DH.IME.Spot.Overlay {
 			private readonly int m_nDpi;
 			private readonly int m_nSize;
 			private readonly int m_nAlpha;
+			private readonly string m_strHangulGlyph;
+			private readonly string m_strLatinGlyph;
 
 			public VisualKey(ImeState state, bool bcaps, bool bnum, bool bscroll, bool bshadow, bool blockpill,
 				enumBadgeCorner ecornercaps, enumBadgeCorner ecornernum, enumBadgeCorner ecornerscroll,
 				int ndotcaps, int ndotnum, int ndotscroll,
 				enumLockDotColor edotcolorcaps, enumLockDotColor edotcolornum, enumLockDotColor edotcolorscroll,
-				int ndpi, int nsize, int nalpha) {
+				int ndpi, int nsize, int nalpha, string strhangulglyph, string strlatinglyph) {
 				m_eKind = state.Kind;
 				m_bFullShape = state.FullShape;
 				m_bCapsLock = bcaps;
@@ -859,6 +883,8 @@ namespace DH.IME.Spot.Overlay {
 				m_nDpi = ndpi;
 				m_nSize = nsize;
 				m_nAlpha = nalpha;
+				m_strHangulGlyph = strhangulglyph ?? string.Empty;
+				m_strLatinGlyph = strlatinglyph ?? string.Empty;
 			}
 
 			public bool Equals(VisualKey other) {
@@ -880,7 +906,9 @@ namespace DH.IME.Spot.Overlay {
 					&& m_eDotColorScroll == other.m_eDotColorScroll
 					&& m_nDpi == other.m_nDpi
 					&& m_nSize == other.m_nSize
-					&& m_nAlpha == other.m_nAlpha;
+					&& m_nAlpha == other.m_nAlpha
+					&& string.Equals(m_strHangulGlyph, other.m_strHangulGlyph, StringComparison.Ordinal)
+					&& string.Equals(m_strLatinGlyph, other.m_strLatinGlyph, StringComparison.Ordinal);
 			}
 
 			public override bool Equals(object obj) {
@@ -907,6 +935,8 @@ namespace DH.IME.Spot.Overlay {
 				nhash = (nhash * 397) ^ m_nDpi;
 				nhash = (nhash * 397) ^ m_nSize;
 				nhash = (nhash * 397) ^ m_nAlpha;
+				nhash = (nhash * 397) ^ m_strHangulGlyph.GetHashCode();
+				nhash = (nhash * 397) ^ m_strLatinGlyph.GetHashCode();
 				return nhash;
 			}
 		}

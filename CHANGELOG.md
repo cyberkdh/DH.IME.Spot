@@ -5,6 +5,44 @@
 이 프로젝트의 주요 변경 사항을 기록합니다.
 형식은 [Keep a Changelog](https://keepachangelog.com/) 를 느슨하게 따릅니다.
 
+## [1.0.0.2] - 2026-09-04
+
+IME 배지와 lock 표시 체계를 다듬고, 배치/표시 옵션을 확장한 업데이트.
+
+### 추가
+- Lock 표시 2채널:
+  - `LockPill` - 배지 글리프 아래의 작은 색 점 행
+  - `Track corner badge` - 배지 바깥 모서리에 붙는 lock dot
+- `Caps Lock`, `Num Lock`, `Scroll Lock` 각각에 대해 독립 설정 추가:
+  - 추적 on/off
+  - corner 위치
+  - dot size (`6 / 8 / 10 / 12 / 16 / 20 px`)
+  - dot color (`Amber / Orange / Red / Pink / Purple / Indigo / Blue / Teal / Green / Lime / Gray / White`)
+- 배치 기준(bounds) 옵션 추가:
+  - `Cursor companion`: `Work area` / `Full monitor`
+  - `Per-monitor widget`: `Work area` / `Full monitor`
+- 배지 글리프 사용자 변경 옵션 추가:
+  - `Hangul glyph`
+  - `Latin glyph`
+  - 배지 본문과 IME switch flash가 같은 glyph 설정을 사용
+
+### 변경
+- 기본 배지 opacity를 `100%`로 조정.
+- 기본 cursor badge size는 `75%` 유지.
+- 기본 cursor bounds는 `Full monitor`로 변경.
+- tray icon `double click` 동작을 `About`에서 `Options` 열기로 변경.
+- `Options` 창의 `Lock keys` / `Badge modes` 탭 구성을 현재 기능 기준으로 재정리.
+
+### 제거
+- `EdgeBar` 모드 제거.
+  - 소스는 보존하되 빌드에서 제외.
+- `MicroDot` 모드 제거.
+  - 소스는 보존하되 빌드에서 제외.
+
+### 참고
+- `Active window corner` 배치는 기존처럼 window rect를 기준으로 하며, 최종 clamp는 work area 기준을 유지.
+- 이번 버전도 한국어 IME 전용.
+
 ## [1.0.0.1] - 2026-08-29
 
 최초 공개 릴리스.
@@ -40,3 +78,4 @@
   다음 릴리스로 이월.
 
 [1.0.0.1]: https://github.com/cyberkdh/DH.IME.Spot/releases/tag/v1.0.0.1
+[1.0.0.2]: https://github.com/cyberkdh/DH.IME.Spot/releases/tag/v1.0.0.2

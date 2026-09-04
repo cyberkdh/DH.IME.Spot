@@ -28,6 +28,11 @@ namespace DH.IME.Spot.Core {
 		AllMonitors
 	}
 
+	internal enum enumPlacementBoundsMode {
+		WorkArea,
+		MonitorArea
+	}
+
 	internal enum enumCursorBadgeSize {
 		Scale10,
 		Scale15,
@@ -160,11 +165,15 @@ namespace DH.IME.Spot.Core {
 
 		public enumCursorBadgeSize CursorBadgeSize { get; set; }
 
+		public enumPlacementBoundsMode CursorBoundsMode { get; set; }
+
 		public bool MonitorWidgetEnabled { get; set; }
 
 		public enumBadgeCorner MonitorWidgetCorner { get; set; }
 
 		public enumMonitorWidgetScope MonitorWidgetScope { get; set; }
+
+		public enumPlacementBoundsMode MonitorWidgetBoundsMode { get; set; }
 
 		public bool FadeIdleEnabled { get; set; }
 
@@ -190,9 +199,13 @@ namespace DH.IME.Spot.Core {
 
 		public enumFlashSize FlashSize { get; set; }
 
+		public string HangulGlyph { get; set; }
+
+		public string LatinGlyph { get; set; }
+
 		public static AppSettings Defaults() {
 			return new AppSettings {
-				BackgroundAlpha = 128,
+				BackgroundAlpha = 255,
 				RunAtStartup = true,
 				PollIntervalMs = 150,
 				ShowCapsLock = true,
@@ -213,9 +226,11 @@ namespace DH.IME.Spot.Core {
 				ActiveWindowCorner = enumBadgeCorner.TopRight,
 				CursorEnabled = true,
 				CursorBadgeSize = enumCursorBadgeSize.Scale75,
+				CursorBoundsMode = enumPlacementBoundsMode.MonitorArea,
 				MonitorWidgetEnabled = true,
 				MonitorWidgetCorner = enumBadgeCorner.BottomLeft,
 				MonitorWidgetScope = enumMonitorWidgetScope.AllMonitors,
+				MonitorWidgetBoundsMode = enumPlacementBoundsMode.WorkArea,
 				FadeIdleEnabled = false,
 				FadeIdleDelayMs = 2000,
 				FadeIdleAction = enumFadeIdleAction.Dim,
@@ -227,7 +242,9 @@ namespace DH.IME.Spot.Core {
 				FlashOnScrollLock = true,
 				FlashDurationMs = 800,
 				FlashAnchor = enumFlashAnchor.Cursor,
-				FlashSize = enumFlashSize.Medium
+				FlashSize = enumFlashSize.Medium,
+				HangulGlyph = "K",
+				LatinGlyph = "E"
 			};
 		}
 
@@ -254,9 +271,11 @@ namespace DH.IME.Spot.Core {
 				ActiveWindowCorner = ActiveWindowCorner,
 				CursorEnabled = CursorEnabled,
 				CursorBadgeSize = CursorBadgeSize,
+				CursorBoundsMode = CursorBoundsMode,
 				MonitorWidgetEnabled = MonitorWidgetEnabled,
 				MonitorWidgetCorner = MonitorWidgetCorner,
 				MonitorWidgetScope = MonitorWidgetScope,
+				MonitorWidgetBoundsMode = MonitorWidgetBoundsMode,
 				FadeIdleEnabled = FadeIdleEnabled,
 				FadeIdleDelayMs = FadeIdleDelayMs,
 				FadeIdleAction = FadeIdleAction,
@@ -268,7 +287,9 @@ namespace DH.IME.Spot.Core {
 				FlashOnScrollLock = FlashOnScrollLock,
 				FlashDurationMs = FlashDurationMs,
 				FlashAnchor = FlashAnchor,
-				FlashSize = FlashSize
+				FlashSize = FlashSize,
+				HangulGlyph = HangulGlyph,
+				LatinGlyph = LatinGlyph
 			};
 		}
 
@@ -323,6 +344,14 @@ namespace DH.IME.Spot.Core {
 				CursorBadgeSize = enumCursorBadgeSize.Scale75;
 			}
 
+			if (Enum.IsDefined(typeof(enumPlacementBoundsMode), CursorBoundsMode) == false) {
+				CursorBoundsMode = enumPlacementBoundsMode.MonitorArea;
+			}
+
+			if (Enum.IsDefined(typeof(enumPlacementBoundsMode), MonitorWidgetBoundsMode) == false) {
+				MonitorWidgetBoundsMode = enumPlacementBoundsMode.WorkArea;
+			}
+
 			if (Enum.IsDefined(typeof(enumFadeIdleAction), FadeIdleAction) == false) {
 				FadeIdleAction = enumFadeIdleAction.Dim;
 			}
@@ -334,6 +363,9 @@ namespace DH.IME.Spot.Core {
 			if (Enum.IsDefined(typeof(enumFlashSize), FlashSize) == false) {
 				FlashSize = enumFlashSize.Medium;
 			}
+
+			HangulGlyph = NormalizeGlyph(HangulGlyph, "K");
+			LatinGlyph = NormalizeGlyph(LatinGlyph, "E");
 		}
 
 		public static double ScaleOf(enumCursorBadgeSize esize) {
@@ -363,6 +395,15 @@ namespace DH.IME.Spot.Core {
 			}
 
 			return nvalue > nmax ? nmax : nvalue;
+		}
+
+		private static string NormalizeGlyph(string strvalue, string strfallback) {
+			if (string.IsNullOrWhiteSpace(strvalue) == true) {
+				return strfallback;
+			}
+
+			string strtrimmed = strvalue.Trim();
+			return strtrimmed.Length > 2 ? strtrimmed.Substring(0, 2) : strtrimmed;
 		}
 	}
 }

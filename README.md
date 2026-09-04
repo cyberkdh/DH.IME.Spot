@@ -8,31 +8,36 @@
 
 ![DH.IME.Spot](docs/screenshot.png)
 
-- **버전:** 1.0.0.1
+- **버전:** 1.0.0.2
 - **플랫폼:** Windows 10 이상 (x86/x64)
 - **런타임:** .NET Framework 4.6 (Windows 10 이상 기본 포함)
 - **의존성:** 없음 (NuGet 패키지 미사용)
 
 ## 기능
 
-- **IME 상태 배지** — per-pixel alpha 레이어드 배지에 `K`(한글) / `E`(영문) 표시.
+- **IME 상태 배지** — per-pixel alpha 레이어드 배지에 사용자 지정 가능한 `Hangul glyph` / `Latin glyph` 표시.
 - **표시 방식 3가지, 각각 독립 토글:**
   - *활성 창 코너* — 포커스된 창의 지정 코너에 배지 고정.
-  - *커서 컴패니언* — 마우스 커서를 따라다님 (60Hz 부드러운 추적, 전역 마우스 훅 미사용).
-  - *모니터별 위젯* — 모든 모니터(또는 주 모니터만)의 지정 코너에 고정 배지.
-- **투명도 조절** (10%–100%) — 글자·그림자도 배경과 함께 흐려짐.
+  - *커서 컴패니언* — 마우스 커서를 따라다님 (60Hz 부드러운 추적, 전역 마우스 훅 미사용, `Work area` / `Full monitor` 선택 가능).
+  - *모니터별 위젯* — 현재 모니터 또는 모든 모니터의 지정 코너에 고정 배지 (`Work area` / `Full monitor` 선택 가능).
+- **Lock 표시 2채널**
+  - `LockPill` — 글리프 아래의 작은 색 점 행
+  - `Track corner badge` — 배지 모서리에 붙는 lock dot
+- **Lock key별 독립 옵션** — `Caps/Num/Scroll` 각각 on/off, corner, dot size, dot color 설정.
+- **기본 배지 opacity 100%** — 글자·그림자 alpha도 배경과 함께 조정.
 - **커서 배지 크기** 옵션 (25%–150%).
 - **모니터별 DPI 대응.**
 - **전체화면 자동 숨김** — exclusive / borderless 전체화면 앱 위에서는 배지가 숨겨짐.
 - **시작 프로그램 등록** 토글.
 - 트레이 메뉴 **Pause overlay** (런타임 전용, 저장 안 함).
+- tray icon **double click -> Options**.
 - 설정은 **레지스트리**에 저장 — 설정 파일을 만들지 않음.
 
 ## 설치 / 실행
 
 1. 아래 방법으로 빌드하거나 릴리스에서 `DH.IME.Spot.exe` 를 받습니다.
 2. `DH.IME.Spot.exe` 실행 → 알림 영역(시스템 트레이)에 아이콘이 나타납니다.
-3. 트레이 아이콘 우클릭 → **Options…** 에서 표시 방식, 투명도, 크기, 시작 등록 설정.
+3. 트레이 아이콘 우클릭 또는 double click → **Options…** 에서 표시 방식, lock 옵션, glyph, 투명도, 크기, 시작 등록 설정.
 4. 우클릭 → **Exit** 로 종료.
 
 설치 관리자 없이 단일 실행 파일(~53 KB)이며 관리자 권한이 필요 없습니다.
@@ -57,7 +62,7 @@ Get-ChildItem -Recurse | Unblock-File
 
 SmartScreen 파란 창이 떠도 **추가 정보 → 실행**으로 진행할 수 있습니다.
 
-![Options](docs/options.png)
+![Options v1.0.0.2](docs/options2.png)
 
 ## 빌드
 
@@ -92,9 +97,20 @@ MSBuild DH.IME.SpotSol\workspace\DH.IME.Spot\DH.IME.Spot.csproj /t:Rebuild /p:Co
 | `ActiveWindowCorner` | REG_SZ | `TopLeft` / `TopRight` / `BottomLeft` / `BottomRight` |
 | `CursorEnabled` | DWORD | 커서 컴패니언 배지 on/off |
 | `CursorBadgeSize` | REG_SZ | `Scale25` … `Scale150` |
+| `CursorBoundsMode` | REG_SZ | `WorkArea` / `MonitorArea` |
 | `MonitorWidgetEnabled` | DWORD | 모니터별 위젯 배지 on/off |
 | `MonitorWidgetCorner` | REG_SZ | 모니터별 위젯 코너 |
-| `MonitorWidgetScope` | REG_SZ | `AllMonitors` / `PrimaryOnly` |
+| `MonitorWidgetScope` | REG_SZ | `CurrentMonitor` / `AllMonitors` |
+| `MonitorWidgetBoundsMode` | REG_SZ | `WorkArea` / `MonitorArea` |
+| `BadgeLockPill` | DWORD | 글리프 아래 `LockPill` 표시 |
+| `ShowCapsLock` / `ShowNumLock` / `ShowScrollLock` | DWORD | 각 lock key 추적 on/off |
+| `CapsLockCorner` / `NumLockCorner` / `ScrollLockCorner` | REG_SZ | 각 lock dot의 corner |
+| `CapsLockDotSize` / `NumLockDotSize` / `ScrollLockDotSize` | DWORD | 각 lock dot size |
+| `CapsLockDotColor` / `NumLockDotColor` / `ScrollLockDotColor` | REG_SZ | 각 lock dot color |
+| `HangulGlyph` / `LatinGlyph` | REG_SZ | 배지와 flash에 쓰는 사용자 glyph |
+| `FlashEnabled` 외 `Flash*` 값들 | DWORD / REG_SZ | change flash 관련 옵션 |
+| `FadeIdleEnabled` 외 `Fade*` 값들 | DWORD / REG_SZ | idle fade 관련 옵션 |
+| `PollIntervalMs` | DWORD | IME polling interval |
 
 시작 프로그램 등록은 별도로
 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run` 의

@@ -15,6 +15,7 @@ namespace DH.IME.Spot.Overlay.Placement {
 		public Point Cursor;
 		public Size BadgeSize;
 		public MonitorMetrics Monitor;
+		public enumPlacementBoundsMode BoundsMode;
 	}
 
 	internal interface IBadgePlacement {

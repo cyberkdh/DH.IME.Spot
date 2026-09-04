@@ -5,6 +5,44 @@
 All notable changes to this project are documented in this file.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.0.0.2] - 2026-09-04
+
+Update focused on refining the IME badge and lock indicators, plus expanding placement and display options.
+
+### Added
+- Two lock-indicator channels:
+  - `LockPill` - a small row of colored dots under the main badge glyph
+  - `Track corner badge` - lock dots attached to the outer corners of the badge
+- Independent settings for `Caps Lock`, `Num Lock`, and `Scroll Lock`:
+  - tracking on/off
+  - corner position
+  - dot size (`6 / 8 / 10 / 12 / 16 / 20 px`)
+  - dot color (`Amber / Orange / Red / Pink / Purple / Indigo / Blue / Teal / Green / Lime / Gray / White`)
+- New placement bounds options:
+  - `Cursor companion`: `Work area` / `Full monitor`
+  - `Per-monitor widget`: `Work area` / `Full monitor`
+- User-configurable badge glyphs:
+  - `Hangul glyph`
+  - `Latin glyph`
+  - the main badge and IME switch flash share the same glyph settings
+
+### Changed
+- Default badge opacity is now `100%`.
+- Default cursor badge size remains `75%`.
+- Default cursor bounds are now `Full monitor`.
+- Tray icon `double click` now opens `Options` instead of `About`.
+- The `Lock keys` and `Badge modes` tabs in `Options` were reorganized around the current feature set.
+
+### Removed
+- Removed the `EdgeBar` mode.
+  - The source is preserved, but excluded from the build.
+- Removed the `MicroDot` mode.
+  - The source is preserved, but excluded from the build.
+
+### Notes
+- `Active window corner` still uses the target window rect, with final clamping against the work area.
+- This version is still Korean-IME-only.
+
 ## [1.0.0.1] - 2026-08-29
 
 First public release.
@@ -40,3 +78,4 @@ First public release.
   (Japanese, Chinese, generic layouts) is deferred to a future release.
 
 [1.0.0.1]: https://github.com/cyberkdh/DH.IME.Spot/releases/tag/v1.0.0.1
+[1.0.0.2]: https://github.com/cyberkdh/DH.IME.Spot/releases/tag/v1.0.0.2
